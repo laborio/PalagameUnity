@@ -7,6 +7,7 @@ using TMPro;
 
 public class PalagonDisplay : MonoBehaviour
 {
+    [HideInInspector]
     public TMP_Text nameText;
     public TMP_Text costText;
     public TMP_Text traitText1;
@@ -14,6 +15,8 @@ public class PalagonDisplay : MonoBehaviour
     public TMP_Text goldGenText;
     public TMP_Text xpGenText;
     public GameObject displayPanel;
+
+    [HideInInspector]
     public Palagon palagonData;
 
     void Start()

@@ -20,7 +20,7 @@ public class UIManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void UpdateUI()
+  public void UpdateUI()
 {
     int totalGoldGen = 0;
     int totalXPGen = 0;
@@ -34,7 +34,21 @@ public class UIManager : MonoBehaviour
     goldText.text = GameManager.Instance.playerGold + "g";
     xpText.text = GameManager.Instance.playerXP + "xp";
     levelText.text = "Lv." + GameManager.Instance.playerLevel;
-    levelProgressBar.value = (float)GameManager.Instance.playerXP / (GameManager.Instance.playerLevel * 10);
+
+    // XP required for the *previous* and *next* level
+    int previousLevelXP = (GameManager.Instance.playerLevel > 1) 
+        ? Mathf.RoundToInt(50 * Mathf.Pow(1.8f, GameManager.Instance.playerLevel - 2)) 
+        : 0; // Level 1 starts from 0 XP
+    
+    int nextLevelXP = Mathf.RoundToInt(50 * Mathf.Pow(1.8f, GameManager.Instance.playerLevel - 1));
+
+    // XP progress between previous and next level
+    int xpSinceLastLevel = GameManager.Instance.playerXP - previousLevelXP;
+    int xpRequiredForNext = nextLevelXP - previousLevelXP;
+
+    levelProgressBar.value = Mathf.Clamp01((float)xpSinceLastLevel / xpRequiredForNext);
 }
+
+
 
 }

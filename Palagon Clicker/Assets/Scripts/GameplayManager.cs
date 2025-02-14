@@ -6,8 +6,8 @@ public class GameplayManager : MonoBehaviour
 {
     public static GameplayManager Instance;
     public float goldGenerationInterval = 1f;
-    public float xpGenerationInterval = 1f;
     public List<Palagon> activePalagons = new List<Palagon>();
+    public int xpToNextLevel = 75;
 
     void Awake()
     {
@@ -25,8 +25,7 @@ public class GameplayManager : MonoBehaviour
     public void AddPalagon(Palagon palagon)
     {
         activePalagons.Add(palagon);
-        Debug.Log("Added Palagon: " + palagon.palagonName + " | Gold: " + palagon.goldGeneration + " | XP: " + palagon.xpGeneration);
-        UIManager.Instance.UpdateUI(); // ✅ Update UI immediately after adding
+        UIManager.Instance.UpdateUI();
     }
 
     private IEnumerator GenerateResources()
@@ -35,7 +34,8 @@ public class GameplayManager : MonoBehaviour
         {
             yield return new WaitForSeconds(goldGenerationInterval);
             GenerateGoldAndXP();
-            UIManager.Instance.UpdateUI(); // ✅ Update UI every tick
+            CheckLevelUp();
+            UIManager.Instance.UpdateUI();
         }
     }
 
@@ -47,4 +47,22 @@ public class GameplayManager : MonoBehaviour
             GameManager.Instance.playerXP += palagon.xpGeneration;
         }
     }
+
+    private void CheckLevelUp()
+{
+    if (GameManager.Instance.playerXP >= xpToNextLevel)
+    {
+        GameManager.Instance.playerXP -= xpToNextLevel;
+        GameManager.Instance.playerLevel++;
+
+        // Hard exponential scaling starting at 150 XP
+        xpToNextLevel = Mathf.RoundToInt(75 * Mathf.Pow(1.8f, GameManager.Instance.playerLevel - 1));
+
+        Debug.Log("Level Up! New Level: " + GameManager.Instance.playerLevel + " | Next XP Required: " + xpToNextLevel);
+
+        ShopManager.Instance.OpenShop(); // ✅ Open the shop on level up
+    }
+}
+
+
 }

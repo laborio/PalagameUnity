@@ -20,6 +20,12 @@ public class PlacementManager : MonoBehaviour
         selectedPalagonPrefab = palagonPrefab;
     }
 
+    public void SelectPalagonFromShop(Palagon selectedPalagonData)
+{
+    selectedPalagonPrefab = Resources.Load<GameObject>("Palagons/" + selectedPalagonData.palagonName); // Load prefab dynamically
+    selectedPalagonPrefab.GetComponent<PalagonDisplay>().InitializePalagon(selectedPalagonData);
+}
+
   public void TryPlacePalagon(int slotIndex)
 {
     if (selectedPalagonPrefab != null)
