@@ -48,21 +48,34 @@ public class GameplayManager : MonoBehaviour
         }
     }
 
-    private void CheckLevelUp()
+   private void CheckLevelUp()
 {
     if (GameManager.Instance.playerXP >= xpToNextLevel)
     {
         GameManager.Instance.playerXP -= xpToNextLevel;
         GameManager.Instance.playerLevel++;
 
-        // Hard exponential scaling starting at 150 XP
-        xpToNextLevel = Mathf.RoundToInt(75 * Mathf.Pow(1.8f, GameManager.Instance.playerLevel - 1));
+        xpToNextLevel = Mathf.RoundToInt(150 * Mathf.Pow(1.8f, GameManager.Instance.playerLevel - 1));
 
         Debug.Log("Level Up! New Level: " + GameManager.Instance.playerLevel + " | Next XP Required: " + xpToNextLevel);
 
-        ShopManager.Instance.OpenShop(); // ✅ Open the shop on level up
+        // ✅ Find all FloorManagers and unlock floors based on level
+        foreach (FloorManager floor in FindObjectsOfType<FloorManager>())
+        {
+            if (floor.gameObject.name.Contains("Floor2") && GameManager.Instance.playerLevel >= 4)
+                floor.UnlockFloor();
+            if (floor.gameObject.name.Contains("Floor3") && GameManager.Instance.playerLevel >= 7)
+                floor.UnlockFloor();
+            if (floor.gameObject.name.Contains("Floor4") && GameManager.Instance.playerLevel >= 10)
+                floor.UnlockFloor();
+        }
+
+        ShopManager.Instance.OpenShop(); 
     }
 }
+
+
+
 
 
 }
