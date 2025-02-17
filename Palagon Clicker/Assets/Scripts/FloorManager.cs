@@ -4,70 +4,135 @@ using UnityEngine;
 
 public class FloorManager : MonoBehaviour
 {
-    public GameObject[] spawnPlaceholders; // Assign placeholders for this floor
-    private bool[] isOccupied;
+    public static FloorManager Instance;
+    public GameObject[] floors; // Array of all floor GameObjects
+    public GameObject[][] spawnPlaceholders; // Each floor's spawn placeholders
+    public CanvasGroup[] floorLockedUI; // Each floor's lock UI
+    private bool[] isUnlocked; // Track unlocked state of each floor
+    private bool[][] isOccupied; // Track occupied state for each placeholder
 
-    public CanvasGroup floorLockedUI; // ✅ Each floor has its own lock UI
-
-   void Start()
-{
-    isOccupied = new bool[spawnPlaceholders.Length];
-
-    // Check if this floor should start as locked
-    if (floorLockedUI != null && floorLockedUI.alpha > 0) 
+    void Awake()
     {
-        foreach (var placeholder in spawnPlaceholders)
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
+
+    void Start()
+    {
+        int floorCount = floors.Length;
+        isUnlocked = new bool[floorCount];
+        spawnPlaceholders = new GameObject[floorCount][];
+        isOccupied = new bool[floorCount][];
+
+        for (int i = 0; i < floorCount; i++)
         {
-            placeholder.SetActive(false); // Hide all placeholders if floor is locked
+            SpawnPlaceHolder[] placeholders = floors[i].GetComponentsInChildren<SpawnPlaceHolder>();
+            spawnPlaceholders[i] = new GameObject[placeholders.Length];
+            isOccupied[i] = new bool[placeholders.Length];
+
+            for (int j = 0; j < placeholders.Length; j++)
+            {
+                spawnPlaceholders[i][j] = placeholders[j].gameObject;
+                isOccupied[i][j] = false; // Ensure all placeholders are initially unoccupied
+            }
+
+            // Ensure the first floor starts unlocked, others stay locked
+            if (i == 0)
+            {
+                isUnlocked[i] = true;
+            }
+            else if (floorLockedUI[i] != null && floorLockedUI[i].alpha > 0)
+            {
+                isUnlocked[i] = false;
+            }
+
+            // Hide placeholders for locked floors
+            foreach (var placeholder in spawnPlaceholders[i])
+            {
+                placeholder.SetActive(isUnlocked[i]);
+            }
         }
     }
 
-    ShowAvailableSpots(); // Only show spots for unlocked floors
+  public void ShowAvailableSpots(int floorIndex)
+{
+    //Debug.Log("Updating available spots for Floor: " + floorIndex);
+
+    for (int j = 0; j < spawnPlaceholders[floorIndex].Length; j++)
+    {
+        bool shouldBeActive = !isOccupied[floorIndex][j];
+        spawnPlaceholders[floorIndex][j].SetActive(shouldBeActive);
+
+      //  Debug.Log($"Placeholder {j} on Floor {floorIndex} Active: {shouldBeActive}");
+    }
 }
 
 
-    public void ShowAvailableSpots()
-    {
-        for (int i = 0; i < spawnPlaceholders.Length; i++)
-        {
-            if (!isOccupied[i])
-                spawnPlaceholders[i].SetActive(true);
-        }
-    }
 
-    public GameObject PlacePalagon(int index, GameObject palagonPrefab)
-    {
-        if (!isOccupied[index]) // Ensure slot is free
-        {
-            GameObject newPalagon = Instantiate(palagonPrefab, spawnPlaceholders[index].transform.position, Quaternion.identity);
-            isOccupied[index] = true;
-            spawnPlaceholders[index].SetActive(false);
-            return newPalagon; // Return the instantiated Palagon
-        }
-        return null; // If placement fails, return null
-    }
-
-   public void UnlockFloor()
+   public GameObject PlacePalagon(int floorIndex, int slotIndex, GameObject palagonPrefab)
 {
-    // ✅ Unlock placeholders for this floor
-    foreach (var placeholder in spawnPlaceholders)
+    if (!isOccupied[floorIndex][slotIndex]) // Ensure slot is free
     {
-        placeholder.SetActive(true);
-    }
+        GameObject newPalagon = Instantiate(palagonPrefab, spawnPlaceholders[floorIndex][slotIndex].transform.position, Quaternion.identity);
+        
+        isOccupied[floorIndex][slotIndex] = true; // ✅ Mark slot as occupied BEFORE hiding placeholders
 
-    // ✅ Fade out "Locked" UI
-    if (floorLockedUI != null)
+        Debug.Log($"Palagon placed at Floor {floorIndex}, Slot {slotIndex}. Hiding remaining placeholders...");
+
+        // ✅ Ensure all placeholders on this floor get updated
+        for (int j = 0; j < isOccupied[floorIndex].Length; j++)
+        {
+            isOccupied[floorIndex][j] = true; // ✅ Mark all slots as occupied
+        }
+
+        spawnPlaceholders[floorIndex][slotIndex].SetActive(false); // ✅ Hide the clicked placeholder
+        ShowAvailableSpots(floorIndex); // ✅ Update only the current floor's placeholders
+
+        return newPalagon;
+    }
+    return null;
+}
+
+
+
+
+ public void UnlockFloor(int floorIndex)
+{
+    if (floorIndex < floors.Length && !isUnlocked[floorIndex])
     {
-        StartCoroutine(FadeOutUI(floorLockedUI));
-    }
+        isUnlocked[floorIndex] = true;
 
-    Debug.Log("Floor unlocked: " + gameObject.name);
+        Debug.Log("Floor unlocked: " + floorIndex);
+
+        // ✅ Reset occupied status for all placeholders on this floor
+        for (int j = 0; j < isOccupied[floorIndex].Length; j++)
+        {
+            isOccupied[floorIndex][j] = false;
+        }
+
+        // ✅ Show available placeholders for the new floor
+        ShowAvailableSpots(floorIndex);
+
+        // ✅ Fade out "Locked" UI
+        if (floorLockedUI[floorIndex] != null)
+        {
+            StartCoroutine(FadeOutUI(floorLockedUI[floorIndex]));
+        }
+    }
+}
+
+
+public bool IsFloorUnlocked(int floorIndex)
+{
+    return isUnlocked[floorIndex];
 }
 
 
     private IEnumerator FadeOutUI(CanvasGroup canvasGroup)
     {
-        float duration = 1f; // 1 second fade-out
+        float duration = 1f;
         float startAlpha = canvasGroup.alpha;
         float time = 0;
 
@@ -79,6 +144,6 @@ public class FloorManager : MonoBehaviour
         }
 
         canvasGroup.alpha = 0;
-        canvasGroup.gameObject.SetActive(false); // Hide after fade-out
+        canvasGroup.gameObject.SetActive(false);
     }
 }

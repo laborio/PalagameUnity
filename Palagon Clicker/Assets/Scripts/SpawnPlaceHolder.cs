@@ -4,20 +4,14 @@ using UnityEngine;
 
 public class SpawnPlaceHolder : MonoBehaviour
 {
-    public int slotIndex;
+    public int floorIndex; // ✅ This should be set in the Inspector per floor
+    public int slotIndex; // ✅ Each placeholder should have a unique slot index
 
-    void Update()
+    private void OnMouseDown()
     {
-        if (Input.GetMouseButtonDown(0)) // Left-click detection
+        if (PlacementManager.Instance != null)
         {
-            Vector2 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(worldPoint, Vector2.zero);
-
-            if (hit.collider != null && hit.collider.gameObject == gameObject)
-            {
-                PlacementManager.Instance.TryPlacePalagon(slotIndex);
-                Debug.Log("SpawnPlaceHolder Clicked via Raycast: Slot " + slotIndex);
-            }
+            PlacementManager.Instance.TryPlacePalagon(floorIndex, slotIndex);
         }
     }
 }

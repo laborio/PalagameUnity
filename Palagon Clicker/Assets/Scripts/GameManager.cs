@@ -18,10 +18,15 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    void Start()
-    {
-        LoadGame();
-    }
+   void Start()
+{
+    LoadGame();
+    UIManager.Instance.UpdateUI();
+
+    // ✅ Open the shop at game start to force the player to pick their first Palagon
+    ShopManager.Instance.OpenShop();
+}
+
 
     public void SaveGame()
     {

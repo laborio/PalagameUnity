@@ -72,17 +72,20 @@ public class ShopManager : MonoBehaviour
 }
 
 
-    public void SelectPalagon(Palagon selectedPalagon)
+   public void SelectPalagon(Palagon selectedPalagon)
+{
+    PlacementManager.Instance.SelectPalagonFromShop(selectedPalagon);
+    CloseShop();
+}
+
+public void CloseShop()
+{
+    if (PlacementManager.Instance.selectedPalagonPrefab == null)
     {
-        if (GameManager.Instance.playerGold >= selectedPalagon.cost)
-        {
-            GameManager.Instance.playerGold -= selectedPalagon.cost;
-            PlacementManager.Instance.SelectPalagonFromShop(selectedPalagon);
-            shopPanel.SetActive(false); // Close shop
-        }
-        else
-        {
-            Debug.Log("Not enough gold!");
-        }
+        Debug.Log("You must pick a Palagon before closing the shop!");
+        return; // ✅ Prevent closing the shop without selecting a Palagon
     }
+
+    shopPanel.SetActive(false);
+}
 }

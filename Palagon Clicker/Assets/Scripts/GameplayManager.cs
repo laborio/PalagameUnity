@@ -60,22 +60,13 @@ public class GameplayManager : MonoBehaviour
         Debug.Log("Level Up! New Level: " + GameManager.Instance.playerLevel + " | Next XP Required: " + xpToNextLevel);
 
         // ✅ Find all FloorManagers and unlock floors based on level
-        foreach (FloorManager floor in FindObjectsOfType<FloorManager>())
-        {
-            if (floor.gameObject.name.Contains("Floor2") && GameManager.Instance.playerLevel >= 4)
-                floor.UnlockFloor();
-            if (floor.gameObject.name.Contains("Floor3") && GameManager.Instance.playerLevel >= 7)
-                floor.UnlockFloor();
-            if (floor.gameObject.name.Contains("Floor4") && GameManager.Instance.playerLevel >= 10)
-                floor.UnlockFloor();
-        }
+        if (GameManager.Instance.playerLevel >= 4) FloorManager.Instance.UnlockFloor(1);
+        if (GameManager.Instance.playerLevel >= 7) FloorManager.Instance.UnlockFloor(2);
+        if (GameManager.Instance.playerLevel >= 10) FloorManager.Instance.UnlockFloor(3);
+
 
         ShopManager.Instance.OpenShop(); 
     }
 }
-
-
-
-
 
 }

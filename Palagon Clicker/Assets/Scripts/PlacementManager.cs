@@ -20,54 +20,47 @@ public class PlacementManager : MonoBehaviour
         selectedPalagonPrefab = palagonPrefab;
     }
 
-    public void SelectPalagonFromShop(Palagon selectedPalagonData)
+   public void SelectPalagonFromShop(Palagon selectedPalagonData)
 {
-    selectedPalagonPrefab = Resources.Load<GameObject>("Palagons/" + selectedPalagonData.palagonName); // Load prefab dynamically
+    selectedPalagonPrefab = Resources.Load<GameObject>("Palagons/" + selectedPalagonData.palagonName);
     selectedPalagonPrefab.GetComponent<PalagonDisplay>().InitializePalagon(selectedPalagonData);
-}
 
-  public void TryPlacePalagon(int slotIndex)
-{
-    if (selectedPalagonPrefab != null)
+    Debug.Log("Selected new Palagon: " + selectedPalagonData.palagonName);
+
+    // ✅ Show available placeholders for all unlocked floors
+    for (int i = 0; i < FloorManager.Instance.floors.Length; i++)
     {
-        FloorManager floorManager = FindObjectOfType<FloorManager>();
-        if (floorManager != null)
+        if (FloorManager.Instance.IsFloorUnlocked(i)) // Ensure floor is unlocked
         {
-            GameObject newPalagon = floorManager.PlacePalagon(slotIndex, selectedPalagonPrefab);
-            if (newPalagon != null)
-            {
-                PalagonDisplay palagonDisplay = newPalagon.GetComponent<PalagonDisplay>();
-                if (palagonDisplay != null)
-                {
-                    string cleanName = selectedPalagonPrefab.name.Replace("(Clone)", "").Trim();
-                    Palagon originalPalagon = PalagonDatabase.Instance.GetPalagon(cleanName);
-
-                    if (originalPalagon != null)
-                    {
-                        // Assign a unique instance of the Palagon data
-                        Palagon instancePalagon = new Palagon(
-                            originalPalagon.palagonName,
-                            originalPalagon.cost,
-                            originalPalagon.primaryTrait,
-                            originalPalagon.secondaryTrait,
-                            originalPalagon.goldGeneration,
-                            originalPalagon.xpGeneration
-                        );
-
-                        palagonDisplay.InitializePalagon(instancePalagon);
-
-                        // ✅ Register the new Palagon for gold and XP generation
-                        GameplayManager.Instance.AddPalagon(instancePalagon);
-                    }
-                    else
-                    {
-                        Debug.LogError("Palagon data not found for: " + cleanName);
-                    }
-                }
-            }
+            FloorManager.Instance.ShowAvailableSpots(i);
         }
-        selectedPalagonPrefab = null;
     }
 }
 
+
+    public void TryPlacePalagon(int floorIndex, int slotIndex)
+    {
+        if (selectedPalagonPrefab == null)
+        {
+            Debug.Log("No Palagon selected! Please pick one from the shop first.");
+            return;
+        }
+
+        GameObject newPalagon = FloorManager.Instance.PlacePalagon(floorIndex, slotIndex, selectedPalagonPrefab);
+
+        if (newPalagon != null)
+        {
+            PalagonDisplay palagonDisplay = newPalagon.GetComponent<PalagonDisplay>();
+            if (palagonDisplay != null)
+            {
+                GameplayManager.Instance.AddPalagon(palagonDisplay.palagonData);
+            }
+
+            // ✅ Hide placeholders after placement
+            FloorManager.Instance.ShowAvailableSpots(floorIndex);
+
+            // ✅ Clear selection so the player must select a new Palagon before placing another
+            selectedPalagonPrefab = null;
+        }
+    }
 }
